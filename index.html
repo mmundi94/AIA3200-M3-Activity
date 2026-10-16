@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practice Activity: Route DoseMate's Messages</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fbf6ff;
+    --ink:#1b1530;
+    --soft:#5a5274;
+    --violet:#582fc1;
+    --teal:#134f5c;
+    --cer:#00a6fb;
+    --fla:#ff5fa2;
+    --lime:#c6f432;
+    --limeD:#6f9a00;
+    --sun:#ffb627;
+    --ok:#12a150;
+    --miss:#f0386b;
+    --sans:"Sora","Segoe UI",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:var(--sans);color:var(--ink);background:var(--bg);min-height:100vh;line-height:1.5;position:relative;overflow-x:hidden}
+  body::before{content:"";position:fixed;inset:-15%;z-index:-2;
+    background:
+      radial-gradient(34% 30% at 4% 10%, rgba(0,166,251,.42), transparent 70%),
+      radial-gradient(34% 32% at 98% 6%, rgba(198,244,50,.55), transparent 70%),
+      radial-gradient(40% 36% at 94% 94%, rgba(255,95,162,.42), transparent 70%),
+      radial-gradient(36% 32% at 6% 96%, rgba(88,47,193,.32), transparent 70%),
+      radial-gradient(24% 22% at 55% 55%, rgba(255,182,39,.22), transparent 70%);
+    animation:drift 26s ease-in-out infinite alternate}
+  @keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(-2%,1.5%) scale(1.04)}}
+  .grain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.30;mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.88' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .1  0 0 0 0 .08  0 0 0 0 .2  0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+  .wrap{max-width:1180px;margin:0 auto;padding:18px 16px 40px}
+
+  .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .brand b{display:block;font-size:18px;color:var(--violet);font-weight:800}
+  .brand span{font-family:var(--mono);font-size:12px;color:var(--soft)}
+  .chip{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;background:var(--lime);color:var(--ink);
+    padding:8px 14px;border-radius:999px;border:2px solid var(--ink);display:inline-flex;align-items:center;gap:8px}
+  .chip i{width:8px;height:8px;border-radius:50%;background:var(--violet);animation:blink 1.6s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+  /* signal progress */
+  .signal{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px}
+  .sig{background:rgba(255,255,255,.88);border-radius:16px;padding:10px 12px;border:2px solid transparent;display:flex;align-items:flex-end;gap:10px;min-width:0}
+  .sig.cur{border-color:var(--c);box-shadow:0 6px 18px -8px var(--c)}
+  .sig .nm{font-size:12.5px;font-weight:600;line-height:1.2;flex:1;min-width:0}
+  .sig .nm small{display:block;font-family:var(--mono);font-size:10.5px;color:var(--soft);font-weight:500}
+  .bars{display:flex;align-items:flex-end;gap:2px;height:28px}
+  .bars i{width:5px;border-radius:2px;background:rgba(27,21,48,.14)}
+  .bars i.ok{background:var(--ok)} .bars i.no{background:var(--miss)} .bars i.cur{background:var(--c);animation:blink 1s infinite}
+
+  .layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
+  .layout>*{min-width:0}
+  .layout.full{grid-template-columns:minmax(0,1fr)}
+  .layout.full .deck{display:none}
+
+  .card{background:#fff;border-radius:24px;padding:24px;position:relative;
+    box-shadow:0 1px 0 rgba(27,21,48,.06), 0 18px 40px -22px rgba(88,47,193,.55);border-top:6px solid var(--sc,var(--violet))}
+  .eyebrow{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--sc,var(--violet))}
+  h1{font-size:clamp(28px,4.4vw,42px);line-height:1.08;margin:8px 0 12px;font-weight:800;letter-spacing:-.8px}
+  h2{font-size:clamp(22px,3vw,30px);line-height:1.15;margin:6px 0 10px;font-weight:800;letter-spacing:-.4px}
+  h3{font-size:16px;margin:0 0 8px}
+  .hl{color:var(--violet);position:relative;white-space:nowrap}
+  .hl::after{content:"";position:absolute;left:0;right:0;bottom:2px;height:8px;border-radius:4px;background:var(--lime);z-index:-1}
+  p{margin:0 0 12px}
+  .lead{font-size:16.5px;color:var(--soft)}
+
+  .route{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0}
+  .stop{display:flex;gap:12px;align-items:center;padding:12px;border-radius:16px;background:var(--cs);position:relative;overflow:hidden}
+  .stop .ic{flex:0 0 46px;height:46px;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center}
+  .stop .ic svg{width:26px;height:26px}
+  .stop b{display:block;font-size:15px}
+  .stop small{color:var(--soft);font-size:12.5px}
+  .stop::after{content:"";position:absolute;right:-20px;top:-20px;width:70px;height:70px;border-radius:50%;border:2px dashed var(--c);opacity:.5;animation:spin 14s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .note{font-size:14px;color:var(--soft)}
+
+  .btn{font-family:var(--sans);font-weight:800;font-size:15.5px;border:0;cursor:pointer;background:var(--violet);color:#fff;padding:13px 22px;border-radius:14px;
+    box-shadow:0 6px 0 #3b1d8a;transition:transform .1s, box-shadow .1s}
+  .btn:hover{transform:translateY(-1px)}
+  .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #3b1d8a}
+  .btn.alt{background:#fff;color:var(--ink);border:2px solid var(--ink);box-shadow:0 5px 0 var(--ink)}
+  .btn:focus-visible,.opt:focus-visible{outline:3px solid var(--cer);outline-offset:3px}
+
+  .badge{width:80px;height:80px;border-radius:50%;background:var(--sc);color:#fff;display:grid;place-items:center;margin-bottom:10px;position:relative}
+  .badge svg{width:44px;height:44px}
+  .badge::before,.badge::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid var(--sc);opacity:0;animation:ripple 2.4s infinite}
+  .badge::after{animation-delay:1.2s}
+  @keyframes ripple{0%{transform:scale(.85);opacity:.7}100%{transform:scale(1.35);opacity:0}}
+  .keys{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 20px}
+  .key{font-size:12.5px;font-weight:600;padding:6px 11px;border-radius:999px;background:var(--cs);color:var(--ink)}
+
+  .qtop{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .pill{font-family:var(--mono);font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--scs);color:var(--ink)}
+  .prompt{font-size:19px;font-weight:600;line-height:1.4;margin:14px 0 12px;overflow-wrap:anywhere}
+  .codes{display:grid;gap:8px;margin:0 0 14px}
+  .code{font-family:var(--mono);font-size:13px;border-radius:12px;padding:9px 12px;background:#17122b;color:#efeaff;word-break:break-all;display:flex;gap:10px;align-items:baseline}
+  .code b{flex:0 0 auto;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--lime);color:var(--ink)}
+  .code.sub b{background:var(--fla);color:#fff}
+  .ask{font-size:14px;font-weight:600;color:var(--soft);margin-bottom:10px}
+  .opts{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .opt{font-family:var(--sans);text-align:left;cursor:pointer;background:#fff;border:2px solid var(--cs2);border-radius:16px;padding:12px;display:flex;align-items:center;gap:10px;
+    font-size:15px;font-weight:600;color:var(--ink);transition:transform .12s,border-color .12s,background .12s}
+  .opt .oi{flex:0 0 38px;height:38px;border-radius:12px;background:var(--cs);color:var(--c);display:grid;place-items:center}
+  .opt .oi svg{width:24px;height:24px}
+  .opt small{display:block;font-weight:400;font-size:12px;color:var(--soft)}
+  .opt:hover:not([disabled]){transform:translateY(-2px);border-color:var(--c)}
+  .opt[disabled]{cursor:default}
+  .opt.dim{opacity:.4}
+  .opt.mine.right{background:#e6f8ee;border-color:var(--ok)}
+  .opt.mine.wrong{background:#ffe7ee;border-color:var(--miss);animation:shake .4s}
+  .opt.truth{background:#f1fbf5;border-color:var(--ok);border-style:dashed}
+  @keyframes shake{20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+  .tag{margin-left:auto;font-family:var(--mono);font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap}
+  .tag.ok{background:var(--ok);color:#fff} .tag.no{background:var(--miss);color:#fff} .tag.ans{background:#fff;color:var(--ok);border:1.5px solid var(--ok)}
+  .status{margin-top:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border-radius:16px;background:#f5f1ff}
+  .status .m{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px}
+  .dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px}
+  .dot.ok{background:var(--ok)} .dot.no{background:var(--miss)}
+
+  /* animated deck */
+  .deck{position:sticky;top:14px;border-radius:24px;overflow:hidden;background:#fff;box-shadow:0 18px 40px -22px rgba(0,166,251,.6)}
+  .deck-head{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--ink);color:#fff}
+  .deck-head b{font-size:14.5px}
+  .live{margin-left:auto;font-family:var(--mono);font-size:11px;font-weight:700;display:flex;align-items:center;gap:6px;color:var(--lime)}
+  .live i{width:8px;height:8px;border-radius:50%;background:var(--lime);animation:blink 1.2s infinite}
+  .scene{position:relative;background:
+      radial-gradient(circle at 1px 1px, rgba(88,47,193,.16) 1px, transparent 1.5px) 0 0/14px 14px,
+      linear-gradient(160deg,#f6fbff,#fff5fb)}
+  .scene{overflow:hidden}
+  .scene>svg{display:block;width:100%;height:auto;overflow:hidden}
+  .code span{min-width:0}
+  .deck{max-width:100%}
+  .caption{padding:12px 16px;font-size:13.5px;color:var(--soft);border-top:1px solid #eee8fb;min-height:48px}
+  .caption b{color:var(--ink)}
+  .link{stroke:#c9bfe6;stroke-width:2.5;stroke-dasharray:6 6;animation:flow 1.4s linear infinite}
+  .link.hot{stroke:var(--ok)} .link.bad{stroke:var(--miss);animation:none;stroke-dasharray:3 6}
+  @keyframes flow{to{stroke-dashoffset:-24}}
+  .node circle.ring{fill:#fff;stroke:var(--nc);stroke-width:3}
+  .node .lbl{font-family:var(--sans);font-size:10.5px;font-weight:600;fill:var(--ink)}
+  .node .sub{font-family:var(--mono);font-size:9px;fill:var(--soft)}
+  .node.faint{opacity:.35}
+  .node.good circle.ring{stroke:var(--ok);stroke-width:4}
+  .node.bad circle.ring{stroke:var(--miss);stroke-width:4}
+  .node.gone{opacity:.15;transition:opacity .6s}
+  .node.pulse circle.ring{animation:np .5s ease}
+  @keyframes np{50%{stroke-width:7}}
+  .halo{fill:none;stroke:var(--nc);stroke-width:2;opacity:0;transform-box:fill-box;transform-origin:center;animation:ripple 2.2s infinite}
+  .flag{font-family:var(--mono);font-size:10px;font-weight:700}
+
+  /* final */
+  .report{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0 22px}
+  .rp{border-radius:18px;padding:14px;background:var(--cs);position:relative;overflow:hidden}
+  .rp .n{font-size:30px;font-weight:800;line-height:1}
+  .rp .l{font-size:13px;font-weight:600;margin-top:4px}
+  .rp .bars{margin-top:10px;height:34px}
+  .rp .bars i{width:auto;flex:1}
+  .lines{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:22px}
+  .ln{border-radius:18px;background:#faf8ff;padding:12px 14px;border-left:6px solid var(--c)}
+  .ln h3{color:var(--c)}
+  .ln ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+  .ln li{display:flex;gap:8px;align-items:baseline;font-size:13.5px}
+  .ln li .r{flex:0 0 auto;width:10px;height:10px;border-radius:50%;background:var(--ok);transform:translateY(1px)}
+  .ln li .r.no{background:transparent;border:2px solid var(--miss)}
+  .ln li em{font-style:normal;color:var(--soft);font-size:12.5px}
+  .ideas{list-style:none;padding:0;margin:0 0 22px;display:grid;gap:10px}
+  .ideas li{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:16px;background:var(--cs);font-size:15px}
+  .ideas .k{flex:0 0 30px;height:30px;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:12px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--soft);margin:-8px 0 18px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  @media (max-width:920px){
+    .layout{grid-template-columns:minmax(0,1fr)}
+    .deck{position:static}
+    .report{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .lines{grid-template-columns:1fr}
+  }
+  @media (max-width:600px){
+    .signal{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .card{padding:18px}
+    .route{grid-template-columns:1fr}
+    .opts{grid-template-columns:1fr}
+    .prompt{font-size:17px}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><b>Nexford University</b><span>AIA3200 · Foundations of Robotics and IoT</span></div>
+    <span class="chip"><i></i>Practice Activity · Module 3</span>
+  </header>
+  <nav class="signal" id="signal" aria-label="Progress"></nav>
+  <main class="layout" id="layout">
+    <section class="card" id="stage" aria-live="polite"></section>
+    <aside class="deck" id="deck" aria-label="Animated view of DoseMate's messages">
+      <div class="deck-head"><b>Message Deck</b><span class="live"><i></i>LIVE</span></div>
+      <div class="scene" id="scene"></div>
+      <div class="caption" id="caption"></div>
+    </aside>
+  </main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var P='fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"';
+  var G={
+    home:'<path d="M5 15L16 6l11 9"/><path d="M8 13v13h16V13"/><rect x="13" y="18" width="6" height="8" rx="1"/>',
+    router:'<rect x="5" y="17" width="22" height="8" rx="3"/><path d="M10 17l-2-7M22 17l2-7"/><circle cx="11" cy="21" r="1" fill="currentColor"/><circle cx="15" cy="21" r="1" fill="currentColor"/>',
+    phone:'<rect x="10" y="4" width="12" height="24" rx="3"/><path d="M14 24h4"/><path d="M4 12a5 5 0 0 1 0 8M27.5 12a5 5 0 0 1 0 8"/>',
+    tower:'<path d="M16 10l-6 18M16 10l6 18M12 22h8M13.5 17h5"/><circle cx="16" cy="8" r="2"/><path d="M9 4a9 9 0 0 0 0 9M23 4a9 9 0 0 1 0 9"/>',
+    gateway:'<rect x="7" y="14" width="18" height="12" rx="3"/><path d="M12 14V6M20 14V9"/><circle cx="12" cy="5" r="1.5"/><circle cx="20" cy="8" r="1.5"/><path d="M11 20h10"/>',
+    globe:'<circle cx="16" cy="16" r="11"/><path d="M5 16h22M16 5c4 4 4 18 0 22M16 5c-4 4-4 18 0 22"/>',
+    device:'<rect x="7" y="5" width="18" height="22" rx="5"/><path d="M11 12h10v6a5 5 0 0 1-10 0z"/><circle cx="21" cy="8.5" r="1.3" fill="currentColor"/>',
+    broker:'<path d="M16 4l10 6v12l-10 6-10-6V10z"/><circle cx="16" cy="16" r="3.5"/><path d="M16 4v8.5M16 19.5V28"/>',
+    screen:'<rect x="4" y="6" width="24" height="16" rx="3"/><path d="M12 27h8M16 22v5"/><path d="M8 17l4-4 3 3 5-6 4 4"/>',
+    bell:'<path d="M9 21V14a7 7 0 0 1 14 0v7l2 3H7z"/><path d="M14 27h4"/>',
+    log:'<rect x="7" y="5" width="18" height="22" rx="3"/><path d="M11 11h10M11 16h10M11 21h6"/>',
+    browser:'<rect x="4" y="6" width="24" height="20" rx="3"/><path d="M4 11h24"/><circle cx="8" cy="8.5" r=".8" fill="currentColor"/><path d="M9 17h14M9 21h8"/>',
+    server:'<rect x="7" y="5" width="18" height="9" rx="2"/><rect x="7" y="18" width="18" height="9" rx="2"/><circle cx="11" cy="9.5" r="1" fill="currentColor"/><circle cx="11" cy="22.5" r="1" fill="currentColor"/>',
+    eye:'<path d="M3 16s5-8 13-8 13 8 13 8-5 8-13 8S3 16 3 16z"/><circle cx="16" cy="16" r="3.5"/>',
+    wifi:'<path d="M4 13a17 17 0 0 1 24 0M8 17a11 11 0 0 1 16 0M12 21a5 5 0 0 1 8 0"/><circle cx="16" cy="25" r="1.5" fill="currentColor"/>',
+    ble:'<path d="M10 10l12 12-6 5V5l6 5-12 12"/>',
+    cell:'<path d="M6 26v-4M11 26v-8M16 26v-12M21 26v-16M26 26V6"/>',
+    lora:'<circle cx="16" cy="16" r="2.5"/><path d="M10 10a8.5 8.5 0 0 0 0 12M22 10a8.5 8.5 0 0 1 0 12M6 6a14 14 0 0 0 0 20M26 6a14 14 0 0 1 0 20"/>',
+    yes:'<path d="M6 17l6 6 14-14"/>',
+    no:'<path d="M8 8l16 16M24 8L8 24"/>',
+    mqtt:'<circle cx="7" cy="16" r="3"/><circle cx="25" cy="7" r="3"/><circle cx="25" cy="16" r="3"/><circle cx="25" cy="25" r="3"/><path d="M10 16h12M10 15l12-7M10 17l12 7"/>',
+    http:'<path d="M5 11h18M19 7l4 4-4 4"/><path d="M27 21H9M13 17l-4 4 4 4"/>',
+    q0:'<path d="M5 16h20M21 12l4 4-4 4"/>',
+    q1:'<path d="M5 12h20M21 8l4 4-4 4"/><path d="M27 22H7M11 18l-4 4 4 4"/>',
+    q2:'<path d="M5 8h20M21 5l4 3-4 3"/><path d="M27 14H7M10 11l-3 3 3 3"/><path d="M5 20h20M21 17l4 3-4 3"/><path d="M27 26H7M10 23l-3 3 3 3"/>',
+    id:'<rect x="4" y="8" width="24" height="16" rx="3"/><circle cx="11" cy="16" r="3"/><path d="M17 13h7M17 18h5"/>',
+    retry:'<path d="M25 11a10 10 0 1 0 1 9"/><path d="M26 5v6h-6"/>',
+    will:'<path d="M9 5h14v22l-7-5-7 5z"/><path d="M13 12h6"/>',
+    pin:'<path d="M16 28s-8-8-8-14a8 8 0 0 1 16 0c0 6-8 14-8 14z"/><circle cx="16" cy="14" r="3"/>',
+    shield:'<path d="M16 4l10 4v7c0 7-4.5 11-10 13C10.5 26 6 22 6 15V8z"/><path d="M11 16l4 4 6-7"/>',
+    leak:'<path d="M16 4l10 4v7c0 7-4.5 11-10 13C10.5 26 6 22 6 15V8z"/><path d="M12 12l8 8M20 12l-8 8"/>',
+    net:'<circle cx="16" cy="16" r="2.5"/><path d="M10 10a8.5 8.5 0 0 0 0 12M22 10a8.5 8.5 0 0 1 0 12M6 6a14 14 0 0 0 0 20M26 6a14 14 0 0 1 0 20"/>',
+    route:'<circle cx="6" cy="16" r="3"/><circle cx="26" cy="8" r="3"/><circle cx="26" cy="24" r="3"/><path d="M9 16h6l8-7M15 16l8 7"/>',
+    promise:'<path d="M5 12h18M19 8l4 4-4 4"/><path d="M27 22H9M13 18l-4 4 4 4"/>',
+    online:'<path d="M4 13a17 17 0 0 1 24 0M8 17a11 11 0 0 1 16 0"/><path d="M16 21v6M13 24h6"/>'
+  };
+  function ic(k){return '<svg viewBox="0 0 32 32" '+P+' aria-hidden="true">'+G[k]+'</svg>';}
+
+  var COL={cer:["#00a6fb","#e0f4ff"],violet:["#582fc1","#ece6ff"],fla:["#ff5fa2","#ffe6f1"],lime:["#6f9a00","#f1fbd2"],sun:["#e08e00","#fff2d6"],
+           teal:["#134f5c","#dff0f3"],ok:["#12a150","#e6f8ee"],miss:["#f0386b","#ffe7ee"]};
+  function op(key,label,icon,col,sub){return {key:key,label:label,icon:icon,c:COL[col][0],cs:COL[col][1],sub:sub||""};}
+
+  var NET=[op("wifi","Wi-Fi","wifi","cer","Uses the home internet"),op("ble","Bluetooth LE","ble","violet","Short range, very low power"),
+           op("cell","Cellular (LTE-M, NB-IoT)","cell","fla","SIM and data plan"),op("lora","LoRaWAN","lora","lime","Long range, own gateways")];
+  var DELIV=[op("yes","Delivered","yes","ok","The filter matches"),op("no","Not delivered","no","miss","The filter does not match")];
+  var PAT=[op("mqtt","Publish and subscribe (MQTT)","mqtt","violet"),op("http","Request and response (HTTP)","http","cer")];
+  var QOS=[op("q0","QoS 0","q0","cer","At most once"),op("q1","QoS 1","q1","violet","At least once"),op("q2","QoS 2","q2","fla","Exactly once")];
+  var FEAT=[op("cid","Unique client ID","id","teal"),op("retry","Reconnect logic and outbox","retry","cer"),
+            op("will","Last will","will","fla"),op("ret","Retained message","pin","sun")];
+  var SAFE=[op("safe","Safe for the public broker","shield","ok"),op("unsafe","Not safe for the public broker","leak","miss")];
+
+  var STATIONS=[
+    {key:"net",name:"Connect the Patient",short:"Networks",c:"#00a6fb",cs:"#e0f4ff",icon:"net",
+     brief:"Range, power, cost, bandwidth, and who runs the network decide which connection fits. Choose the network that gets each patient's DoseMate messages out of the home.",
+     ask:"Which network fits this patient best?",
+     items:[
+       {q:"A patient in the city has reliable home Wi-Fi, and CareLoop would like to avoid a monthly fee for each device.",a:"wifi",opts:NET,scene:"net",log:"City patient with home Wi-Fi"},
+       {q:"A rural patient has no home internet but a usable mobile signal, and should not have to set anything up.",a:"cell",opts:NET,scene:"net",log:"Rural patient, mobile signal only"},
+       {q:"Many patients live close together in one area. CareLoop wants to run its own gateways and send only tiny messages over long distances.",a:"lora",opts:NET,scene:"net",log:"Patients clustered in one area"},
+       {q:"The dispenser sits beside the patient's phone, must use very little power, and can rely on the phone to reach the internet.",a:"ble",opts:NET,scene:"net",log:"Dispenser beside the patient's phone"},
+       {q:"A device must run on a battery for a long time and work across a wide area, with a SIM card instead of home internet.",a:"cell",opts:NET,scene:"net",log:"Long battery life, wide area"}
+     ]},
+    {key:"route",name:"Route the Message",short:"Topics",c:"#582fc1",cs:"#ece6ff",icon:"route",
+     brief:"DoseMate publishes to a topic on the broker, and the broker delivers a copy to every subscriber whose filter matches. Remember: + matches exactly one level, # matches all remaining levels, and topics are case-sensitive.",
+     ask:"Does this subscriber receive the message?",
+     items:[
+       {pub:"nexford/aia3200/<learnerID>/dosemate/events",sub:"nexford/aia3200/<learnerID>/dosemate/#",a:"yes",opts:DELIV,scene:"route",log:"…/dosemate/# filter"},
+       {pub:"careloop/p205/dosemate/status",sub:"careloop/+/dosemate/events",a:"no",opts:DELIV,scene:"route",log:"status vs events"},
+       {pub:"careloop/p205/dosemate/events",sub:"careloop/+/dosemate/events",a:"yes",opts:DELIV,scene:"route",log:"+ for one level"},
+       {pub:"careloop/p205/dosemate/events",sub:"careloop/+/events",a:"no",opts:DELIV,scene:"route",log:"+ cannot span two levels"},
+       {pub:"careloop/p205/dosemate/events",sub:"CareLoop/p205/dosemate/events",a:"no",opts:DELIV,scene:"route",log:"Case-sensitive topic"},
+       {pub:"careloop/p205/dosemate/events",sub:"careloop/#",a:"yes",opts:DELIV,scene:"route",log:"# for all remaining levels"}
+     ]},
+    {key:"promise",name:"Pick the Pattern",short:"Patterns",c:"#ff5fa2",cs:"#ffe6f1",icon:"promise",
+     brief:"First decide whether a job suits request and response (HTTP) or publish and subscribe (MQTT). Then choose a quality of service level by asking what a lost or duplicate message would cost.",
+     ask:"",
+     items:[
+       {q:"Many small devices send events as things happen, often over patchy networks.",a:"mqtt",opts:PAT,scene:"pattern",ask:"Which pattern fits?",log:"Many devices, patchy networks"},
+       {q:"A person fills in a web form to look something up, and the server sends back an answer.",a:"http",opts:PAT,scene:"pattern",ask:"Which pattern fits?",log:"Web form lookup"},
+       {q:"One dose event must reach a dashboard, a reminder service, and an audit log, without the device knowing any of them exist.",a:"mqtt",opts:PAT,scene:"pattern",ask:"Which pattern fits?",log:"One event, three receivers"},
+       {q:"DoseMate reports its battery level every few minutes. If one reading is lost, another is on its way.",a:"q0",opts:QOS,scene:"qos",ask:"Which QoS level fits?",log:"Battery level readings"},
+       {q:"DoseMate sends a missed-dose alert, and Grace's dashboard is set up to ignore duplicates.",a:"q1",opts:QOS,scene:"qos",ask:"Which QoS level fits?",log:"Missed-dose alert"},
+       {q:"A message places an order, and a duplicate would place the order twice.",a:"q2",opts:QOS,scene:"qos",ask:"Which QoS level fits?",log:"Order where duplicates harm"}
+     ]},
+    {key:"online",name:"Keep It Online",short:"Device to dashboard",c:"#6f9a00",cs:"#f1fbd2",icon:"online",
+     brief:"A connected device has to expect lost connections and public brokers. Match each situation to the feature that handles it, then decide what is safe to send through the public broker.",
+     ask:"",
+     items:[
+       {q:"A classmate copies your Wokwi project, and the two devices keep knocking each other off the broker.",a:"cid",opts:FEAT,scene:"cid",ask:"Which feature prevents this?",log:"Two devices, one connection"},
+       {q:"The Wi-Fi drops for a few minutes. DoseMate must keep releasing doses and send the events it missed once the connection returns.",a:"retry",opts:FEAT,scene:"retry",ask:"Which feature handles this?",log:"Wi-Fi drops for a few minutes"},
+       {q:"DoseMate loses power without saying goodbye, and the dashboard still needs to show that it is offline.",a:"will",opts:FEAT,scene:"will",ask:"Which feature handles this?",log:"Device disappears suddenly"},
+       {q:"Grace opens a brand-new dashboard and should see DoseMate's latest status right away.",a:"ret",opts:FEAT,scene:"ret",ask:"Which feature handles this?",log:"New dashboard needs status now"},
+       {q:"A learner builds the topic with their full name instead of their learner ID.",a:"unsafe",opts:SAFE,scene:"safe",ask:"Is this safe?",log:"Full name in the topic"},
+       {q:"A payload of {\"device\":\"dosemate-01\",\"event\":\"dose_taken\",\"sim\":true} on the topic nexford/aia3200/<learnerID>/dosemate/events.",a:"safe",opts:SAFE,scene:"safe",ask:"Is this safe?",log:"Simulated payload, learner ID topic"},
+       {q:"A payload that includes a real patient's name and the real medicine they take.",a:"unsafe",opts:SAFE,scene:"safe",ask:"Is this safe?",log:"Real patient and medicine"}
+     ]}
+  ];
+
+  var IDEAS=[
+    {c:"#00a6fb",cs:"#e0f4ff",t:"The network is a business decision: range, power, cost, bandwidth, and who runs it, and it decides which patients get left out."},
+    {c:"#582fc1",cs:"#ece6ff",t:"DoseMate publishes once to the broker, and every matching subscriber gets a copy. A + matches one level, a # matches all remaining levels."},
+    {c:"#ff5fa2",cs:"#ffe6f1",t:"Choose the QoS level by asking what a lost or duplicate message would cost."},
+    {c:"#6f9a00",cs:"#f1fbd2",t:"A connected device must expect failure, and a public broker carries only simulated data, with learner IDs and never names."}
+  ];
+
+  var TOTAL=STATIONS.reduce(function(n,s){return n+s.items.length;},0);
+  var st;
+  function reset(){st={screen:"intro",s:0,i:0,res:STATIONS.map(function(s){return s.items.map(function(){return null;});})};}
+  reset();
+  var $=function(id){return document.getElementById(id);};
+  var $stage=$("stage"),$scene=$("scene"),$cap=$("caption"),$sig=$("signal"),$layout=$("layout");
+  function find(o,k){for(var j=0;j<o.length;j++) if(o[j].key===k) return o[j]; return null;}
+  function esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+  /* ---------------- animated scene engine ---------------- */
+  var animToken=0;
+  var NODES={};
+  function nodeSVG(n){
+    var col=n.c||"#582fc1";
+    return '<g class="node'+(n.cls?" "+n.cls:"")+'" id="n_'+n.id+'" style="--nc:'+col+'" transform="translate('+n.x+','+n.y+')">'+
+      (n.halo?'<circle class="halo" r="26"/>':'')+
+      '<circle class="ring" r="22"/>'+
+      '<svg x="-13" y="-13" width="26" height="26" viewBox="0 0 32 32" '+P+' style="color:'+col+'">'+G[n.icon]+'</svg>'+
+      (n.side?'<text class="lbl" x="29" y="4">'+esc(n.label)+'</text>':'<text class="lbl" y="38" text-anchor="middle">'+esc(n.label)+'</text>')+
+      (n.sub?'<text class="sub" y="50" text-anchor="middle">'+esc(n.sub)+'</text>':'')+
+    '</g>';
+  }
+  function drawScene(nodes,links,extra){
+    NODES={};
+    nodes.forEach(function(n){NODES[n.id]=n;});
+    var l=links.map(function(p){var a=NODES[p[0]],b=NODES[p[1]];return '<line class="link" id="l_'+p[0]+'_'+p[1]+'" x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'"/>';}).join("");
+    $scene.innerHTML='<svg viewBox="0 0 400 260" role="img" aria-label="Animated message flow"><g>'+l+'</g><g>'+nodes.map(nodeSVG).join("")+'</g><g id="fx">'+(extra||"")+'</g><g id="packets"></g></svg>';
+  }
+  function cls(id,c,on){var e=document.getElementById("n_"+id);if(e) e.classList[on===false?"remove":"add"](c);}
+  function lcls(a,b,c){var e=document.getElementById("l_"+a+"_"+b)||document.getElementById("l_"+b+"_"+a);if(e) e.classList.add(c);}
+  function wait(ms,tok){return new Promise(function(res){setTimeout(function(){res(tok===animToken);},REDUCED?0:ms);});}
+  function fly(from,to,color,tok,label,stopAt){
+    return new Promise(function(res){
+      var g=document.getElementById("packets"); if(!g||tok!==animToken) return res(false);
+      var a=NODES[from],b=NODES[to];
+      var p=document.createElementNS("http://www.w3.org/2000/svg","g");
+      p.innerHTML='<rect x="-9" y="-7" width="18" height="14" rx="4" fill="'+color+'" stroke="#1b1530" stroke-width="1.5"/><path d="M-6 -3l6 4 6-4" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>'+
+        (label?'<text y="-12" text-anchor="middle" class="flag" fill="'+color+'">'+esc(label)+'</text>':'');
+      g.appendChild(p);
+      var end=stopAt||1, dur=REDUCED?1:720, t0=null;
+      function step(ts){
+        if(tok!==animToken){p.remove();return res(false);}
+        if(!t0)t0=ts; var k=Math.min(1,(ts-t0)/dur); var e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2; e*=end;
+        p.setAttribute("transform","translate("+(a.x+(b.x-a.x)*e)+","+(a.y+(b.y-a.y)*e)+")");
+        if(k<1) requestAnimationFrame(step);
+        else { if(end===1){cls(to,"pulse");setTimeout(function(){cls(to,"pulse",false);},500);} setTimeout(function(){p.remove();},stopAt?600:120); res(true); }
+      }
+      requestAnimationFrame(step);
+    });
+  }
+  function fx(html){var g=document.getElementById("fx");if(g) g.insertAdjacentHTML("beforeend",html);}
+  function caption(t){$cap.innerHTML=t;}
+
+  var NETMAP={wifi:"router",ble:"phone",cell:"tower",lora:"gw"};
+  var SCENES={
+    net:{draw:function(){
+        drawScene([
+          {id:"home",x:56,y:120,icon:"home",label:"Patient home",c:"#134f5c",halo:true},
+          {id:"router",side:1,x:190,y:34,icon:"router",label:"Home router",c:"#00a6fb"},
+          {id:"phone",side:1,x:190,y:96,icon:"phone",label:"Patient's phone",c:"#582fc1"},
+          {id:"tower",side:1,x:190,y:158,icon:"tower",label:"Cell tower",c:"#ff5fa2"},
+          {id:"gw",side:1,x:190,y:214,icon:"gateway",label:"CareLoop gateway",c:"#6f9a00"},
+          {id:"net",x:344,y:120,icon:"globe",label:"Internet",c:"#134f5c"}],
+          [["home","router"],["home","phone"],["home","tower"],["home","gw"],["router","net"],["phone","net"],["tower","net"],["gw","net"]]);
+        caption("DoseMate needs a path out of the patient's home. Each middle stop is one way to reach the internet.");},
+      play:function(it,k,tok){
+        var good=NETMAP[it.a],bad=NETMAP[k],chain=Promise.resolve(true);
+        Object.keys(NETMAP).forEach(function(x){if(NETMAP[x]!==good&&NETMAP[x]!==bad) cls(NETMAP[x],"faint");});
+        if(k!==it.a){cls(bad,"bad");lcls("home",bad,"bad");chain=chain.then(function(){return fly("home",bad,"#f0386b",tok,"",0.55);}).then(function(ok){return ok&&wait(250,tok);});}
+        return chain.then(function(ok){if(!ok)return;cls(good,"good");lcls("home",good,"hot");lcls(good,"net","hot");return fly("home",good,"#12a150",tok);})
+          .then(function(ok){if(ok) return fly(good,"net","#12a150",tok);})
+          .then(function(ok){if(ok) caption("<b>"+find(NET,it.a).label+"</b> carries this patient's DoseMate messages out of the home.");});
+      }},
+    route:{draw:function(it){
+        drawScene([
+          {id:"pub",x:52,y:130,icon:"device",label:"DoseMate",sub:"publishes",c:"#134f5c",halo:true},
+          {id:"brk",x:200,y:130,icon:"broker",label:"Broker",sub:"matches filters",c:"#582fc1"},
+          {id:"sub",x:348,y:130,icon:"screen",label:"Subscriber",sub:"has a filter",c:"#ff5fa2"}],
+          [["pub","brk"],["brk","sub"]]);
+        caption("The broker compares the published topic with the subscriber's filter, level by level.");},
+      play:function(it,k,tok){
+        return fly("pub","brk","#582fc1",tok).then(function(ok){if(!ok)return;
+          if(it.a==="yes"){lcls("brk","sub","hot");cls("sub","good");return fly("brk","sub","#12a150",tok).then(function(o){if(o)caption("<b>Delivered.</b> The filter matches the topic, so the broker sends a copy.");});}
+          lcls("brk","sub","bad");cls("sub","bad");
+          return fly("brk","sub","#f0386b",tok,"no match",0.45).then(function(o){if(o)caption("<b>Not delivered.</b> The filter does not match the topic, so the broker keeps it from this subscriber.");});
+        });
+      }},
+    pattern:{draw:function(){
+        drawScene([
+          {id:"src",x:56,y:130,icon:"device",label:"Sender",c:"#134f5c",halo:true},
+          {id:"mid",x:200,y:130,icon:"broker",label:"?",c:"#c9bfe6",cls:"faint"},
+          {id:"r1",x:344,y:50,icon:"screen",label:"Receiver",c:"#ff5fa2",cls:"faint"},
+          {id:"r2",x:344,y:130,icon:"bell",label:"Receiver",c:"#00a6fb",cls:"faint"},
+          {id:"r3",x:344,y:210,icon:"log",label:"Receiver",c:"#6f9a00",cls:"faint"}],[]);
+        caption("How should this message travel? Choose a pattern to see it move.");},
+      play:function(it,k,tok){
+        if(it.a==="mqtt"){
+          drawScene([
+            {id:"src",x:56,y:130,icon:"device",label:"Device",sub:"publishes once",c:"#134f5c"},
+            {id:"mid",x:200,y:130,icon:"broker",label:"Broker",c:"#582fc1"},
+            {id:"r1",x:344,y:50,icon:"screen",label:"Dashboard",c:"#ff5fa2"},
+            {id:"r2",x:344,y:130,icon:"bell",label:"Reminders",c:"#00a6fb"},
+            {id:"r3",x:344,y:210,icon:"log",label:"Audit log",c:"#6f9a00"}],
+            [["src","mid"],["mid","r1"],["mid","r2"],["mid","r3"]]);
+          return fly("src","mid","#582fc1",tok).then(function(ok){if(!ok)return;
+            return Promise.all([fly("mid","r1","#12a150",tok),fly("mid","r2","#12a150",tok),fly("mid","r3","#12a150",tok)]);})
+            .then(function(r){if(r&&r[0]) caption("<b>Publish and subscribe:</b> one publish, and the broker fans out a copy to every subscriber.");});
+        }
+        drawScene([
+          {id:"src",x:70,y:130,icon:"browser",label:"Client",sub:"asks each time",c:"#00a6fb"},
+          {id:"srv",x:330,y:130,icon:"server",label:"Server",sub:"answers",c:"#134f5c"}],[["src","srv"]]);
+        return fly("src","srv","#00a6fb",tok,"request").then(function(ok){if(ok) return fly("srv","src","#12a150",tok,"response");})
+          .then(function(ok){if(ok) caption("<b>Request and response:</b> the client knows the server and asks, and the server answers.");});
+      }},
+    qos:{draw:function(){
+        drawScene([
+          {id:"dev",x:70,y:130,icon:"device",label:"DoseMate",c:"#134f5c",halo:true},
+          {id:"brk",x:330,y:130,icon:"broker",label:"Broker",c:"#582fc1"}],[["dev","brk"]]);
+        caption("Each QoS level makes a different delivery promise, and higher levels cost extra messages.");},
+      play:function(it,k,tok){
+        var seq;
+        if(it.a==="q0") seq=[["dev","brk","#00a6fb","send once"]];
+        else if(it.a==="q1") seq=[["dev","brk","#582fc1","message"],["brk","dev","#12a150","confirmed"]];
+        else seq=[["dev","brk","#ff5fa2","message"],["brk","dev","#12a150","received"],["dev","brk","#ff5fa2","extra"],["brk","dev","#12a150","done"]];
+        var c=Promise.resolve(true);
+        seq.forEach(function(s){c=c.then(function(ok){if(ok) return fly(s[0],s[1],s[2],tok,s[3]);});});
+        var msg={q0:"<b>QoS 0</b> sends once, with no confirmation. A lost message is simply lost.",q1:"<b>QoS 1</b> waits for a confirmation, so the message may arrive more than once.",q2:"<b>QoS 2</b> adds extra messages to guarantee the message arrives exactly once."};
+        return c.then(function(ok){if(ok) caption(msg[it.a]);});
+      }},
+    cid:{draw:function(){
+        drawScene([
+          {id:"a",x:60,y:60,icon:"device",label:"DoseMate A",sub:"same client ID",c:"#134f5c"},
+          {id:"b",x:60,y:200,icon:"device",label:"DoseMate B",sub:"same client ID",c:"#ff5fa2"},
+          {id:"brk",x:220,y:130,icon:"broker",label:"Broker",c:"#582fc1"},
+          {id:"d",x:350,y:130,icon:"screen",label:"Dashboard",c:"#00a6fb"}],[["a","brk"],["b","brk"],["brk","d"]]);
+        caption("Two copies of the same project try to connect to one broker.");},
+      play:function(it,k,tok){
+        return fly("a","brk","#12a150",tok,"connect").then(function(ok){if(!ok)return;return fly("b","brk","#ff5fa2",tok,"connect");})
+          .then(function(ok){if(!ok)return;cls("a","bad");lcls("a","brk","bad");return fly("brk","a","#f0386b",tok,"kicked off",0.6);})
+          .then(function(ok){if(ok) caption("The broker allows one connection per client ID. A <b>unique client ID</b> (learner ID plus a random suffix) stops the tug of war.");});
+      }},
+    retry:{draw:function(){
+        drawScene([
+          {id:"dev",x:60,y:130,icon:"device",label:"DoseMate",sub:"outbox holds up to 10",c:"#134f5c"},
+          {id:"brk",x:220,y:130,icon:"broker",label:"Broker",c:"#582fc1"},
+          {id:"d",x:350,y:130,icon:"screen",label:"Dashboard",c:"#00a6fb"}],[["dev","brk"],["brk","d"]]);
+        caption("The Wi-Fi is about to drop while doses keep coming due.");},
+      play:function(it,k,tok){
+        lcls("dev","brk","bad");
+        fx('<g id="cut" transform="translate(140,130)"><circle r="12" fill="#fff" stroke="#f0386b" stroke-width="2.5"/><path d="M-5 -5l10 10M5 -5l-10 10" stroke="#f0386b" stroke-width="2.5" stroke-linecap="round"/></g><text id="ob" x="60" y="96" text-anchor="middle" class="flag" fill="#f0386b">outbox: 0</text>');
+        var c=Promise.resolve(true),n=0;
+        [1,2,3].forEach(function(){c=c.then(function(ok){if(!ok)return false;return fly("dev","brk","#ff5fa2",tok,"",0.42).then(function(o){if(o){n++;var t=document.getElementById("ob");if(t)t.textContent="outbox: "+n;}return o;});});});
+        return c.then(function(ok){if(!ok)return;return wait(400,tok);}).then(function(ok){if(!ok)return;
+            var cut=document.getElementById("cut");if(cut)cut.remove();
+            var l=document.getElementById("l_dev_brk");if(l){l.classList.remove("bad");l.classList.add("hot");}
+            var t=document.getElementById("ob");if(t){t.textContent="reconnected";t.setAttribute("fill","#12a150");}
+            return Promise.all([fly("dev","brk","#12a150",tok),wait(160,tok).then(function(o){return o&&fly("dev","brk","#12a150",tok);}),wait(320,tok).then(function(o){return o&&fly("dev","brk","#12a150",tok);})]);})
+          .then(function(r){if(r&&r[0]) caption("<b>Reconnect logic</b> keeps retrying on a timer, and the <b>outbox</b> sends the held events once the connection returns.");});
+      }},
+    will:{draw:function(){
+        drawScene([
+          {id:"dev",x:60,y:130,icon:"device",label:"DoseMate",sub:"left a last will",c:"#134f5c"},
+          {id:"brk",x:220,y:130,icon:"broker",label:"Broker",sub:"holds the will",c:"#582fc1"},
+          {id:"d",x:350,y:130,icon:"screen",label:"Dashboard",c:"#00a6fb"}],[["dev","brk"],["brk","d"]]);
+        caption("When DoseMate connected, it handed the broker a message to publish if it ever vanishes.");},
+      play:function(it,k,tok){
+        return wait(300,tok).then(function(ok){if(!ok)return;cls("dev","gone");lcls("dev","brk","bad");return wait(700,tok);})
+          .then(function(ok){if(!ok)return;return fly("brk","d","#ff5fa2",tok,"offline");})
+          .then(function(ok){if(ok) caption("DoseMate disappeared without saying goodbye, so the broker published its <b>last will</b>: \"offline.\"");});
+      }},
+    ret:{draw:function(){
+        drawScene([
+          {id:"dev",x:60,y:130,icon:"device",label:"DoseMate",c:"#134f5c"},
+          {id:"brk",x:220,y:130,icon:"broker",label:"Broker",sub:"kept: online",c:"#582fc1"},
+          {id:"d",x:350,y:130,icon:"screen",label:"New dashboard",c:"#00a6fb",cls:"faint"}],[["dev","brk"],["brk","d"]]);
+        caption("DoseMate published its status earlier. A new dashboard is about to subscribe.");},
+      play:function(it,k,tok){
+        cls("d","faint",false);cls("d","good");
+        return fly("d","brk","#00a6fb",tok,"subscribe").then(function(ok){if(ok) return fly("brk","d","#12a150",tok,"online");})
+          .then(function(ok){if(ok) caption("The broker kept a <b>retained message</b>, so the new dashboard sees the latest status right away.");});
+      }},
+    safe:{draw:function(){
+        drawScene([
+          {id:"dev",x:60,y:130,icon:"device",label:"DoseMate",c:"#134f5c"},
+          {id:"brk",x:210,y:130,icon:"broker",label:"Public broker",sub:"broker.hivemq.com",c:"#582fc1"},
+          {id:"you",x:350,y:60,icon:"screen",label:"Your client",c:"#00a6fb"},
+          {id:"any",x:350,y:205,icon:"eye",label:"Anyone on #",c:"#ff5fa2"}],[["dev","brk"],["brk","you"],["brk","any"]]);
+        caption("On a public broker, anyone who subscribes to # can read every message.");},
+      play:function(it,k,tok){
+        return fly("dev","brk","#582fc1",tok).then(function(ok){if(!ok)return;
+            var col=it.a==="safe"?"#12a150":"#f0386b"; if(it.a!=="safe") cls("any","bad"); else cls("any","good");
+            return Promise.all([fly("brk","you","#12a150",tok),fly("brk","any",col,tok,it.a==="safe"?"simulated":"exposed")]);})
+          .then(function(r){if(r&&r[0]) caption(it.a==="safe"?"Anyone can read it, but it holds <b>only simulated data</b> and a learner ID, so nothing real is exposed.":"Anyone subscribed to # can read this. Use your <b>learner ID</b> and <b>simulated data only</b>, never names or real medications.");});
+      }}
+  };
+
+  function idleScene(){
+    drawScene([
+      {id:"dev",x:60,y:130,icon:"device",label:"DoseMate",c:"#134f5c",halo:true},
+      {id:"net",x:160,y:60,icon:"wifi",label:"Network",c:"#00a6fb"},
+      {id:"brk",x:250,y:150,icon:"broker",label:"Broker",c:"#582fc1"},
+      {id:"d",x:350,y:80,icon:"screen",label:"Dashboard",c:"#ff5fa2"},
+      {id:"l",x:350,y:215,icon:"log",label:"Audit log",c:"#6f9a00"}],
+      [["dev","net"],["net","brk"],["brk","d"],["brk","l"]]);
+    var tok=++animToken;
+    (function loop(){
+      fly("dev","net","#582fc1",tok).then(function(o){return o&&fly("net","brk","#582fc1",tok);})
+        .then(function(o){return o&&Promise.all([fly("brk","d","#12a150",tok),fly("brk","l","#12a150",tok)]);})
+        .then(function(r){if(r&&r[0]) wait(600,tok).then(function(o){if(o)loop();});});
+    })();
+  }
+
+  /* ---------------- screens ---------------- */
+  function renderSignal(){
+    $sig.innerHTML=STATIONS.map(function(s,si){
+      var cur=(st.screen==="brief"||st.screen==="item")&&si===st.s;
+      var bars=s.items.map(function(_,ii){
+        var r=st.res[si][ii],h=10+Math.round(18*(ii+1)/s.items.length);
+        var c=r?(r.ok?"ok":"no"):(cur&&st.screen==="item"&&ii===st.i?"cur":"");
+        return '<i class="'+c+'" style="height:'+h+'px"></i>';
+      }).join("");
+      var done=st.res[si].filter(Boolean).length;
+      return '<div class="sig'+(cur?" cur":"")+'" style="--c:'+s.c+'"><div class="nm">'+s.name+'<small>'+done+' of '+s.items.length+'</small></div><div class="bars" aria-hidden="true">'+bars+'</div></div>';
+    }).join("");
+  }
+  function setS(s){$stage.style.setProperty("--sc",s?s.c:"#582fc1");$stage.style.setProperty("--scs",s?s.cs:"#ece6ff");}
+
+  function intro(){
+    setS(null);
+    var r=STATIONS.map(function(s,si){return '<div class="stop" style="--c:'+s.c+';--cs:'+s.cs+'"><span class="ic">'+ic(s.icon)+'</span><div><b>'+(si+1)+'. '+s.name+'</b><small>'+s.items.length+' items</small></div></div>';}).join("");
+    $stage.innerHTML='<div class="eyebrow">Practice Activity · Connecting Devices</div>'+
+      '<h1>Route DoseMate\'s <span class="hl">Messages</span></h1>'+
+      '<p class="lead">Right now, the only thing that knows a dose was missed is the dispenser. Dana wants to know how Grace finds out. Work through four stations to get DoseMate\'s messages out of the home, to the right people, and safely through the broker. Watch the Message Deck to see each answer play out.</p>'+
+      '<div class="route">'+r+'</div>'+
+      '<p class="note">You get one attempt per item. Your answer is recorded, and you move on. About 15 minutes.</p>'+
+      '<button class="btn" id="go">Start Station 1</button>';
+    $("go").onclick=function(){st.screen="brief";st.s=0;render(true);};
+    idleScene();
+    caption("DoseMate publishes, the broker routes, and subscribers receive. This is the flow you will work with.");
+  }
+
+  function brief(){
+    var s=STATIONS[st.s]; setS(s);
+    var seen={},k="";
+    s.items.forEach(function(it){it.opts.forEach(function(o){if(!seen[o.key]){seen[o.key]=1;k+='<span class="key" style="--cs:'+o.cs+'">'+o.label+'</span>';}});});
+    $stage.innerHTML='<div class="badge">'+ic(s.icon)+'</div><div class="eyebrow">Station '+(st.s+1)+' of '+STATIONS.length+'</div><h2>'+s.name+'</h2><p class="lead">'+esc(s.brief)+'</p><div class="keys">'+k+'</div><button class="btn" id="go">Begin '+s.items.length+' items</button>';
+    $("go").onclick=function(){st.screen="item";st.i=0;render(true);};
+    idleScene();
+    caption("Station "+(st.s+1)+": <b>"+s.name+"</b>. Each answer will play out here.");
+  }
+
+  function item(fresh){
+    var s=STATIONS[st.s],it=s.items[st.i],r=st.res[st.s][st.i]; setS(s);
+    var top='<div class="qtop"><div class="eyebrow">Station '+(st.s+1)+' · '+s.name+'</div><span class="pill">Item '+(st.i+1)+' of '+s.items.length+'</span></div>';
+    var body=it.pub?'<div class="prompt">DoseMate publishes a message, and one subscriber is listening.</div><div class="codes"><div class="code"><b>Topic</b><span>'+esc(it.pub)+'</span></div><div class="code sub"><b>Filter</b><span>'+esc(it.sub)+'</span></div></div>'
+                    :'<div class="prompt">'+esc(it.q)+'</div>';
+    var opts=it.opts.map(function(o){
+      var c="opt",t="";
+      if(r){ if(o.key===r.k){c+=" mine "+(r.ok?"right":"wrong");t='<span class="tag '+(r.ok?"ok":"no")+'">Your answer</span>';}
+             else if(o.key===it.a){c+=" truth";t='<span class="tag ans">Answer</span>';} else c+=" dim"; }
+      return '<button class="'+c+'" data-k="'+o.key+'" style="--c:'+o.c+';--cs:'+o.cs+';--cs2:'+o.cs+'"'+(r?" disabled":"")+'><span class="oi">'+ic(o.icon)+'</span><span>'+o.label+(o.sub?'<small>'+o.sub+'</small>':'')+'</span>'+t+'</button>';
+    }).join("");
+    var last=st.i===s.items.length-1;
+    var nx=last?(st.s===STATIONS.length-1?"See your connection report":"Go to Station "+(st.s+2)):"Next item";
+    var stat=r?'<div class="status"><div class="m">'+(r.ok?'<span class="dot ok" aria-hidden="true">&#10003;</span>Recorded as correct.':'<span class="dot no" aria-hidden="true">&#215;</span>Recorded as incorrect. The answer is '+find(it.opts,it.a).label+'.')+'</div><button class="btn" id="next">'+nx+'</button></div>':"";
+    $stage.innerHTML=top+body+'<div class="ask">'+(it.ask||s.ask)+'</div><div class="opts">'+opts+'</div>'+stat;
+    if(!r){
+      Array.prototype.forEach.call($stage.querySelectorAll(".opt"),function(b){b.onclick=function(){choose(b.getAttribute("data-k"));};});
+      animToken++; SCENES[it.scene].draw(it);
+    } else {
+      var n=$("next"); n.onclick=advance; n.focus({preventScroll:true});
+      if(fresh){ var tok=++animToken; SCENES[it.scene].play(it,r.k,tok); }
+    }
+  }
+
+  function choose(k){
+    if(st.res[st.s][st.i]) return;
+    var it=STATIONS[st.s].items[st.i];
+    st.res[st.s][st.i]={k:k,ok:k===it.a};
+    renderSignal(); item(true);
+  }
+  function advance(){
+    var s=STATIONS[st.s];
+    if(st.i<s.items.length-1) st.i++;
+    else if(st.s<STATIONS.length-1){st.s++;st.i=0;st.screen="brief";}
+    else st.screen="final";
+    render(true);
+  }
+
+  function fin(){
+    setS(null); animToken++;
+    var right=0;
+    var rep=STATIONS.map(function(s,si){
+      var c=st.res[si].filter(function(r){return r&&r.ok;}).length; right+=c;
+      var b=s.items.map(function(_,ii){var r=st.res[si][ii];return '<i class="'+(r&&r.ok?"ok":"no")+'" style="height:'+(12+Math.round(22*(ii+1)/s.items.length))+'px"></i>';}).join("");
+      return '<div class="rp" style="--cs:'+s.cs+'"><div class="n" style="color:'+s.c+'">'+c+'/'+s.items.length+'</div><div class="l">'+s.name+'</div><div class="bars" aria-hidden="true">'+b+'</div></div>';
+    }).join("");
+    var lines=STATIONS.map(function(s,si){
+      var li=s.items.map(function(it,ii){var r=st.res[si][ii];return '<li><span class="r'+(r&&r.ok?"":" no")+'"></span><span>'+esc(it.log)+' <em>· '+find(it.opts,it.a).label+'</em></span></li>';}).join("");
+      return '<div class="ln" style="--c:'+s.c+'"><h3>'+(si+1)+'. '+s.name+'</h3><ul>'+li+'</ul></div>';
+    }).join("");
+    var ideas=IDEAS.map(function(d,i){return '<li style="--c:'+d.c+';--cs:'+d.cs+'"><span class="k">0'+(i+1)+'</span><span>'+esc(d.t)+'</span></li>';}).join("");
+    $stage.innerHTML='<div class="eyebrow">Practice Activity complete</div><h1>Connection <span class="hl">Report</span></h1>'+
+      '<p class="lead">You recorded '+right+' of '+TOTAL+' items as correct. Each line below shows the situation and its answer, ready to support your connectivity recommendation for Dana.</p>'+
+      '<div class="report">'+rep+'</div>'+
+      '<div class="legend"><span><i style="width:10px;height:10px;border-radius:50%;background:var(--ok);display:inline-block"></i>Recorded as correct</span><span><i style="width:10px;height:10px;border-radius:50%;border:2px solid var(--miss);display:inline-block"></i>Recorded as incorrect</span></div>'+
+      '<div class="lines">'+lines+'</div>'+
+      '<h3>Four ideas to carry into your connected prototype</h3><ul class="ideas">'+ideas+'</ul>'+
+      '<button class="btn alt" id="again">Start again</button>';
+    $("again").onclick=function(){reset();render(true);};
+  }
+
+  function render(top){
+    $layout.className="layout"+(st.screen==="final"?" full":"");
+    renderSignal();
+    if(st.screen==="intro") intro(); else if(st.screen==="brief") brief(); else if(st.screen==="item") item(false); else fin();
+    if(top){
+      try{window.scrollTo({top:0,behavior:"smooth"});}catch(e){window.scrollTo(0,0);}
+      if(st.screen!=="item"){var b=$stage.querySelector(".btn");if(b)b.focus({preventScroll:true});}
+    }
+  }
+  render(false);
+})();
+</script>
+</body>
+</html>
